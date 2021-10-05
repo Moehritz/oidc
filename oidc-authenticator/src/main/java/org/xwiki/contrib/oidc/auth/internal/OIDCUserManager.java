@@ -67,6 +67,7 @@ import org.xwiki.observation.ObservationManager;
 import org.xwiki.query.QueryException;
 
 import com.nimbusds.jwt.PlainJWT;
+import com.nimbusds.oauth2.sdk.id.Subject;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
@@ -174,6 +175,17 @@ public class OIDCUserManager
     {
         // Get OIDC user info
         this.logger.debug("OIDC user info request ({},{})", userInfoEndpoint, accessToken);
+
+        if (idToken != null) {
+            UserInfo userInfo = new UserInfo(new Subject(idToken.getSringClaim("oid")));
+            userInfo.setFamilyName(idToken.getStringClaim("family_name"));
+            userInfo.setGivenName(idToken.getStringClaim("given_name"));
+            userInfo.setName(idToken.getStringClaim("name"));
+            userInfo.setEmailAddress(idToken.getStringClaim("unique_name"));
+
+            return updateUser(idToken, userInfo);
+        }
+
         UserInfoRequest userinfoRequest =
             new UserInfoRequest(userInfoEndpoint.getURI(), this.configuration.getUserInfoEndPointMethod(), accessToken);
         HTTPRequest userinfoHTTP = userinfoRequest.toHTTPRequest();
